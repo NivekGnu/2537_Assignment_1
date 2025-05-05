@@ -219,7 +219,7 @@ app.get('/logout', (req,res) => {
 app.get("*dummy", (req,res) => {
     res.status(404);
     res.send(`
-        <p>Wrong URL buddy (Error code 404)</p>
+        <p>Wrong URL buddy (Error 404)</p>
         <img src='/HUUH.gif' alt="HUUH cat" style='width:250px;'>
     `);
 });
