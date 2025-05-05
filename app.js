@@ -25,6 +25,8 @@ const userCollection = database.db(mongodb_database).collection('users');
 
 app.use(express.urlencoded({extended: false}));
 
+app.use(express.static(__dirname + "/public"));
+
 var mongoStore = MongoStore.create({
 	mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/sessions`,
 	crypto: {
@@ -36,7 +38,8 @@ app.use(session({
     secret: node_session_secret,
 	store: mongoStore,
 	saveUninitialized: false, 
-	resave: true
+	resave: true,
+    cookie: {maxAge: expireTime}
 }
 ));
 
@@ -158,8 +161,9 @@ app.post('/loginSubmit', async (req,res) => {
     if(validateEmail.error != null) {
         res.send(`
             <p>Invalid Email</p>
-            <a href='/login>Try Again</a>
-        `)
+            <a href='/login'>Try Again</a>
+        `);
+        return;
     }
 
     const result = await userCollection.find({email: email})
@@ -182,20 +186,26 @@ app.post('/loginSubmit', async (req,res) => {
         }
 
 		res.redirect('/members');
-		return;
 	} else {
-		console.log("incorrect password");
-		res.redirect("/login");
-		return;
+        res.send(`
+            <p>Incorrect Password</p>
+            <a href='/login'>Try Again</a>
+        `);
 	}
 });
 
 app.get('/members', (req,res) => {
+    if(!req.session.user) {
+        res.redirect('/');
+    }
+
+    const randomImage = Math.floor(Math.random() * 3) + 1;
+
     res.send(`
-        <p>Welcome!</p>
-        <a href='/logout'>Log Out</a>
+        <p>Welcome ${req.session.user.name}!</p>
+        <img src='/image${randomImage}.gif' alt='.gif image' style='width:350px;'>
+        </br><a href='/logout' alt="CAT DANCE">Log Out</a>
     `);
- 
 });
 
 app.get('/logout', (req,res) => {
@@ -204,6 +214,14 @@ app.get('/logout', (req,res) => {
         <p>You are logged out, have a nice day!</p>
         <a href='/login'>Log in again</a>
         `);
+});
+
+app.get("*dummy", (req,res) => {
+    res.status(404);
+    res.send(`
+        <p>Wrong URL buddy (Error code 404)</p>
+        <img src='/HUUH.gif' alt="HUUH cat" style='width:250px;'>
+    `);
 });
 
 app.listen(port, () => {
